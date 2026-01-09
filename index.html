@@ -31,6 +31,7 @@
                     type="email" 
                     id="email" 
                     required
+                    autocomplete="email"
                     class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                     placeholder="seu@email.com"
                 >
@@ -44,6 +45,7 @@
                     type="password" 
                     id="password" 
                     required
+                    autocomplete="current-password"
                     class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                     placeholder="••••••••"
                 >
@@ -66,53 +68,111 @@
         <!-- Footer -->
         <div class="mt-8 text-center text-sm text-gray-600">
             <p>Problemas para acessar?</p>
-            <a href="/cdn-cgi/l/email-protection#cfbcbabfa0bdbbaa8fbcaabaaba0a2a6a1a6a0e1aca0a2" class="text-blue-600 hover:text-blue-700 font-medium">
+            <a href="mailto:suporte@seudominio.com" class="text-blue-600 hover:text-blue-700 font-medium">
                 Entre em contato
             </a>
         </div>
     </div>
 
-    <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
-        // Inicializar Supabase
-        const supabase = window.supabase.createClient(
-            SUPABASE_CONFIG.url,
-            SUPABASE_CONFIG.anonKey
-        );
-
-        // Verificar se já está logado
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            if (session) {
-                window.location.href = 'dashboard.html';
-            }
-        });
-
-        // Handle Login
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
+    <script>
+        // Aguardar carregamento completo
+        window.addEventListener('DOMContentLoaded', async () => {
+            console.log('Página carregada');
             
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const button = document.getElementById('loginButton');
-            const errorDiv = document.getElementById('errorMessage');
+            // Verificar se scripts foram carregados
+            if (typeof window.supabase === 'undefined') {
+                console.error('Supabase não carregou!');
+                return;
+            }
+            
+            if (typeof SUPABASE_CONFIG === 'undefined') {
+                console.error('Config não carregou!');
+                return;
+            }
 
-            // Loading state
-            button.disabled = true;
-            button.innerHTML = '<svg class="animate-spin h-5 w-5 mx-auto" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
-            errorDiv.classList.add('hidden');
+            // Inicializar Supabase
+            const { createClient } = window.supabase;
+            const supabase = createClient(
+                SUPABASE_CONFIG.url,
+                SUPABASE_CONFIG.anonKey
+            );
+            
+            console.log('Supabase inicializado');
 
+            // Verificar se já está logado
             try {
-                const { data, error } = await supabase.auth.signInWithPassword({
-                    email,
-                    password
-                });
-
-                if (error) throw error;
-
-                // Success - redirect
-                window.location.href = 'dashboard.html';
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session) {
+                    console.log('Já logado, redirecionando...');
+                    window.location.href = 'dashboard.html';
+                    return;
+                }
             } catch (error) {
-                errorDiv.textContent = error.message === 'Invalid login credentials' 
-                    ? 'Email ou senha incorretos' 
-                    : error.message;
-                errorDiv.classList.remove('hidden');
-      
+                console.error('Erro ao verificar sessão:', error);
+            }
+
+            // Handle Login
+            const loginForm = document.getElementById('loginForm');
+            if (!loginForm) {
+                console.error('Form não encontrado!');
+                return;
+            }
+
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                console.log('Form submetido');
+                
+                const email = document.getElementById('email').value.trim();
+                const password = document.getElementById('password').value;
+                const button = document.getElementById('loginButton');
+                const errorDiv = document.getElementById('errorMessage');
+
+                console.log('Tentando login:', email);
+
+                // Loading state
+                button.disabled = true;
+                button.innerHTML = '<svg class="animate-spin h-5 w-5 mx-auto" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+                errorDiv.classList.add('hidden');
+
+                try {
+                    const { data, error } = await supabase.auth.signInWithPassword({
+                        email: email,
+                        password: password
+                    });
+
+                    console.log('Resultado:', { data, error });
+
+                    if (error) throw error;
+
+                    if (data && data.session) {
+                        console.log('Login OK! Redirecionando...');
+                        // Aguardar um pouco para garantir que a sessão foi salva
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                        window.location.href = 'dashboard.html';
+                    } else {
+                        throw new Error('Sessão não criada');
+                    }
+                } catch (error) {
+                    console.error('Erro no login:', error);
+                    
+                    let errorMessage = 'Erro ao fazer login';
+                    if (error.message === 'Invalid login credentials') {
+                        errorMessage = 'Email ou senha incorretos';
+                    } else if (error.message) {
+                        errorMessage = error.message;
+                    }
+                    
+                    errorDiv.textContent = errorMessage;
+                    errorDiv.classList.remove('hidden');
+                    
+                    button.disabled = false;
+                    button.innerHTML = 'Entrar';
+                }
+            });
+            
+            console.log('Event listener adicionado');
+        });
+    </script>
+</body>
+</html>
+Corrigir login
