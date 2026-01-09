@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu Negócio - Portal do Cliente</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="config.js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navbar -->
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center gap-3">
+                    <div class="p-2 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                    </div>
+                    <span class="text-xl font-bold text-gray-800">Portal do Cliente</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span id="clienteNome" class="text-gray-700 font-medium"></span>
+                    <button 
+                        id="logoutButton"
+                        class="text-red-600 hover:text-red-700 font-medium transition"
+                    >
+                        Sair
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Navigation Tabs -->
+        <div class="mb-8 border-b border-gray-200">
+            <nav class="flex gap-8">
+                <a href="dashboard.html" class="border-b-2 border-transparent text-gray-600 hover:text-gray-800 hover:border-gray-300 font-medium pb-4 px-1 transition">
+                    Dashboard
+                </a>
+                <a href="meu-negocio.html" class="border-b-2 border-blue-500 text-blue-600 font-medium pb-4 px-1">
+                    Meu Negócio
+                </a>
+            </nav>
+        </div>
+
+        <div id="content">
+            <!-- Loading State -->
+            <div id="loading" class="space-y-6">
+                <div class="bg-white rounded-lg p-6 shadow-sm animate-pulse">
+                    <div class="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
+                    <div class="h-32 bg-gray-200 rounded"></div>
+                </div>
+            </div>
+
+            <!-- Content (hidden initially) -->
+            <div id="mainContent" class="hidden space-y-6">
+                <!-- Header -->
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-800">Meu Negócio</h1>
+                    <p class="text-gray-600 mt-1">Gerencie as informações e documentos do seu negócio</p>
+                </div>
+
+                <!-- Business Info Card -->
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <div class="mb-6">
+                        <h2 class="text-xl font-bold text-gray-800 mb-2">Informações do seu Negócio</h2>
+                        <p class="text-sm text-gray-600">
+                            Descreva detalhadamente seu negócio, serviços, horários de funcionamento, 
+                            políticas e qualquer informação relevante para o atendimento.
+                        </p>
+                    </div>
+                    
+                    <textarea 
+                        id="textoInfo"
+                        rows="12"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
+                        placeholder="Digite aqui todas as informações importantes sobre seu negócio..."
+                    ></textarea>
+                    
+                    <div class="mt-4 flex items-center gap-4">
+                        <button 
+                            id="saveInfoButton"
+                            class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-indigo-700 transition transform hover:scale-[1.02] flex items-center gap-2"
+                        >
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path>
+                            </svg>
+                            Salvar Informações
+                        </button>
+                        <span id="saveStatus" class="text-sm text-gray-600"></span>
+                    </div>
+                </div>
+
+                <!-- Documents Card -->
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <div class="mb-6">
+                        <h2 class="text-xl font-bold text-gray-800 mb-2">Documentos</h2>
+                        <p class="text-sm text-gray-600">
+                            Envie documentos relevantes para seu negócio (PDF, DOC, DOCX, TXT)
+                        </p>
+                    </div>
+
+                    <!-- Upload Area -->
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center mb-6 hover:border-blue-400 transition">
+                        <input 
+                            type="file" 
+                            id="fileInput" 
+                            accept=".pdf,.doc,.docx,.txt"
+                            class="hidden"
+                        >
+                        <label for="fileInput" class="cursor-pointer">
+                            <svg class="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                            <p class="text-gray-700 font-medium mb-2">Clique para selecionar um arquivo</p>
+                            <p class="text-sm text-gray-500">PDF, DOC, DOCX ou TXT (máx. 10MB)</p>
+                        </label>
+                    </div>
+
+                    <!-- Upload Status -->
+                    <div id="uploadStatus" class="hidden mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div class="flex items-center gap-3">
+                            <svg class="animate-spin h-5 w-5 text-blue-600" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span class="text-blue-700 font-medium">Enviando documento...</span>
+                        </div>
+                    </div>
+
+                    <!-- Documents List -->
+                    <div id="documentsList" class="space-y-3">
+                        <!-- Documents will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const supabase = window.supabase.createClient(
+            SUPABASE_CONFIG.url,
+            SUPABASE_CONFIG.anonKey
+        );
+
+        let currentUser = null;
+        let currentCliente = null;
+
+        // Initialize
+        async function init() {
+            const { data: { session } } = await supabase.auth.getSession();
+            
+            if (!session) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            currentUser = session.user;
+            await loadClienteData();
+        }
+
+        // Load cliente data
+        async function loadClienteData() {
+            try {
+                const { data: cliente, error } = await supabase
+                    .from('clientes')
+                    .select('*')
+                    .eq('email', currentUser.email)
+                    .single();
+
+                if (error) throw error;
+
+                currentCliente = cliente;
+                document.getElementById('clienteNome').textContent = cliente.nome || 'Cliente';
+
+                await loadBusinessInfo();
+                await loadDocuments();
+
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('mainContent').classList.remove('hidden');
+            } catch (error) {
+                console.error('Erro ao carregar dados:', error);
+                alert('Erro ao carregar seus dados.');
+            }
+        }
+
+        // Load business info
+        async function loadBusinessInfo() {
+            try {
+                const { data } = await supabase
+                    .from('info_negocio')
+                    .select('*')
+                    .eq('cliente_id', currentCliente.id)
+                    .single();
+
+                if (data && data.texto_info) {
+                    document.getElementById('textoInfo').value = data.texto_info;
+                }
+            } catch (error) {
+                console.error('Erro ao carregar info:', error);
+            }
+        }
+
+        // Save business info
+        document.getElementById('saveInfoButton').addEventListener('click', async () => {
+            const button = document.getElementById('saveInfoButton');
+            const status = document.getElementById('saveStatus');
+            const texto = document.getElementById('textoInfo').value;
+
+            button.disabled = true;
+            button.innerHTML = '<svg class="animate-spin h-5 w-5 mx-auto" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+            status.textContent = 'Salvando...';
+
+            try {
+                // Check if exists
+                const { data: existing } = await supabase
+                    .from('info_negocio')
+                    .select('id')
+                    .eq('cliente_id', currentCliente.id)
+                    .single();
+
+                if (existing) {
+                    // Update
+                    await supabase
+                        .from('info_negocio')
+                        .update({ texto_info: texto })
+                        .eq('cliente_id', currentCliente.id);
+                } else {
+                    // Insert
+                    await supabase
+                        .from('info_negocio')
+                        .insert({ cliente_id: currentCliente.id, texto_info: texto });
+                }
+
+                status.textContent = '✓ Salvo com sucesso!';
+                status.classList.add('text-green-600');
+                setTimeout(() => {
+                    status.textContent = '';
+                    status.classList.remove('text-green-600');
+                }, 3000);
+            } catch (error) {
+                status.textContent = '✗ Erro ao salvar';
+                status.classList.add('text-red-600');
+            } finally {
+                button.disabled = false;
+                button.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg> Salvar Informações';
+            }
+        });
+
+        // Upload document
+        document.getElementById('fileInput').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const uploadStatus = document.getElementById('uploadStatus');
+            uploadStatus.classList.remove('hidden');
+
+            try {
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${Date.now()}.${fileExt}`;
+                const filePath = `${currentCliente.id}/${fileName}`;
+
+                // Upload to storage
+                const { error: uploadError } = await supabase.storage
+                    .from('documentos')
+                    .upload(filePath, file);
+
+                if (uploadError) throw uploadError;
+
+                // Get public URL
+                const { data: urlData } = supabase.storage
+                    .from('documentos')
+                    .getPublicUrl(filePath);
+
+                // Save to database
+                await supabase
+                    .from('documentos')
+                    .insert({
+                        cliente_id: currentCliente.id,
+                        nome_arquivo: file.name,
+                        url_arquivo: urlData.publicUrl
+                    });
+
+                uploadStatus.innerHTML = '<div class="flex items-center gap-3"><svg class="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg><span class="text-green-700 font-medium">Documento enviado com sucesso!</span></div>';
+                
+                setTimeout(() => uploadStatus.classList.add('hidden'), 3000);
+                
+                await loadDocuments();
+                e.target.value = '';
+            } catch (error) {
+                uploadStatus.innerHTML = '<div class="flex items-center gap-3"><svg class="h-5 w-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg><span class="text-red-700 font-medium">Erro ao enviar documento</span></div>';
+            }
+        });
+
+        // Load documents
+        async function loadDocuments() {
+            const container = document.getElementById('documentsList');
+            
+            try {
+                const { data: docs } = await supabase
+                    .from('documentos')
+                    .select('*')
+                    .eq('cliente_id', currentCliente.id)
+                    .order('created_at', { ascending: false });
+
+                if (!docs || docs.length === 0) {
+                    container.innerHTML = '<p class="text-center text-gray-500 py-8">Nenhum documento enviado ainda</p>';
+                    return;
+                }
+
+                container.innerHTML = docs.map(doc => `
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 bg-blue-100 rounded">
+                                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-800">${doc.nome_arquivo}</p>
+                                <p class="text-sm text-gray-500">Enviado em ${new Date(doc.created_at).toLocaleDateString('pt-BR')}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button 
+                                onclick="window.open('${doc.url_arquivo}', '_blank')"
+                                class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                                title="Baixar"
+                            >
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                </svg>
+                            </button>
+                            <button 
+                                onclick="deleteDocument('${doc.id}', '${doc.url_arquivo}')"
+                                class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                                title="Excluir"
+                            >
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Erro ao carregar documentos:', error);
+            }
+        }
+
+        // Delete document
+        window.deleteDocument = async (docId, url) => {
+            if (!confirm('Tem certeza que deseja excluir este documento?')) return;
+
+            try {
+                // Extract file path
+                const urlParts = url.split('/documentos/');
+                const filePath = urlParts[1];
+
+                if (filePath) {
+                    await supabase.storage.from('documentos').remove([filePath]);
+                }
+
+                await supabase.from('documentos').delete().eq('id', docId);
+                await loadDocuments();
+            } catch (error) {
+                alert('Erro ao excluir documento');
+            }
+        };
+
+        // Logout
+        document.getElementById('logoutButton').addEventListener('click', async () => {
+            await supabase.auth.signOut();
+            window.location.href = 'index.html';
+        });
+
+        // Initialize
+        init();
+    </script>
+</body>
+</html>
